@@ -158,6 +158,26 @@ class KinectConverter(object):
             self.verticalFov = 46.6
             self.maxDepthVals = 2047 # 11-bit
 
+
+class KcVertSphere(object):
+
+    def __init__(self):
+        self._Displacement = 500
+        self._BaselineLength = 180
+        self._SphericalAngle = 3.142
+        self._Maximum = 1000
+
+
+class KcVert(object):
+
+    def __init__(self):
+        self.co = (0,0,0)
+        self.uv = (0,0)
+        self.n = (0,0,0)
+        self.col = (0,0,0)
+        self.depth = 0
+
+
 # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ 
 # REFERENCES
 
