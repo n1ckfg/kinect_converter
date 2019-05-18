@@ -74,6 +74,19 @@ class KinectConverter(object):
         
         return (pDepthX, pDepthY, pDepthZ)
 
+    def rawDepthToMeters(self, depthValue):
+        if (depthValue < self.maxDepthVals):
+            return 1.0 / (depthValue * -0.0030711016 + 3.3309495161)
+        return 0.0
+
+    def setupDepthLookup(self):
+        for i in range(0, self.maxDepthVals+1):
+            self.depthLookup.append(i/100.0) #self.rawDepthToMeters(float(i)))
+
+    def getDepthLookup(self, input):
+        loc = int((float(input)/255.0) * self.maxDepthVals)
+        return self.depthLookup[loc]
+        
     def setModel(self, model="Kinect"):
         if (model == "Kinect4_Narrow_Unbinned"):
             self.resolutionX = 640
