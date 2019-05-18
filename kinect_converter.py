@@ -63,7 +63,7 @@ class KinectConverter(object):
 
         pWorldX = normalizedX * depthZ * self.xzFactor
         pWorldY = normalizedY * depthZ * self.yzFactor
-        pWorldZ = (depthZ / 255) * self.maxDepthVals
+        pWorldZ = ((depthZ / 255) * self.maxDepthVals)
         
         return (pWorldX, pWorldY, pWorldZ)
   
