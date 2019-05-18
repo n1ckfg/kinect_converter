@@ -56,16 +56,18 @@ class KinectConverter(object):
 
     def convertDepthToWorld(self, depthX, depthY, depthZ):
         depthZ -= 255
-        normalizedX = depthX / self.resolutionX #depthX / self.resolutionX - 0.5
-        normalizedY = depthY / self.resolutionY #0.5 - depthY / self.resolutionY
-     
-        pWorldX = normalizedX * depthZ * self.yzFactor * -(float(self.resolutionX)/float(self.resolutionY))
+        #normalizedX = depthX / self.resolutionX - 0.5
+        #normalizedY = 0.5 - depthY / self.resolutionY
+        normalizedX = depthX / self.resolutionX
+        normalizedY = depthY / self.resolutionY
+
+        pWorldX = normalizedX * depthZ * self.xzFactor
         pWorldY = normalizedY * depthZ * self.yzFactor
         pWorldZ = (depthZ / 255) * self.maxDepthVals
         
         return (pWorldX, pWorldY, pWorldZ)
   
-    def convertWorldToDepth(self, worldX, worldY, worldZ):
+    def convertWorldToDepth(self, worldX, worldY, worldZ): # untested
         pDepthX = self.coeffX * worldX / worldZ + self.halfResX
         pDepthY = self.halfResY - self.coeffY * worldY / worldZ
         pDepthZ = worldZ
