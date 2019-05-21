@@ -50,6 +50,7 @@ class KinectConverter(object):
         self.xzFactor = tan(self.horizontalFov / 2) * 2
         self.yzFactor = tan(self.verticalFov / 2) * 2
 
+    # per pixel depth in mm
     def convertDepthToWorld(self, x, y, z):
         normX = x / self.resolutionX - 0.5
         normY = 0.5 - y / self.resolutionY
