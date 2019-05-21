@@ -30,18 +30,18 @@ from math import tan
 class KinectConverter(object):
 
     def __init__(self, model="Kinect"):
+        # given
         self.horizontalFov = 0
         self.verticalFov = 0
         self.resolutionX = 0
         self.resolutionY = 0
-        self.maxDepthVals = 0
+        self.maxBitDepth = 0
+        self.minDepth = 0
+        self.maxDepth = 0
           
+        # calculated
         self.xzFactor = 0
         self.yzFactor = 0
-        self.coeffX = 0
-        self.coeffY = 0
-        self.halfResX = 0
-        self.halfResY = 0
 
         self.setModel(model)
         self.init()
@@ -49,43 +49,16 @@ class KinectConverter(object):
     def init(self):
         self.xzFactor = tan(self.horizontalFov / 2) * 2
         self.yzFactor = tan(self.verticalFov / 2) * 2
-        self.halfResX = self.resolutionX / 2
-        self.halfResY = self.resolutionY / 2
-        self.coeffX = float(self.resolutionX) / self.xzFactor
-        self.coeffY = float(self.resolutionY) / self.yzFactor
 
-    def convertDepthToWorld(self, depthX, depthY, depthZ):
-        depthZ -= 255
-        #normalizedX = depthX / self.resolutionX - 0.5
-        #normalizedY = 0.5 - depthY / self.resolutionY
-        normalizedX = depthX / self.resolutionX
-        normalizedY = depthY / self.resolutionY
-
-        pWorldX = normalizedX * depthZ * self.xzFactor
-        pWorldY = normalizedY * depthZ * self.yzFactor
-        pWorldZ = ((depthZ / 255) * self.maxDepthVals)
-        
-        return (pWorldX, pWorldY, pWorldZ)
-  
-    def convertWorldToDepth(self, worldX, worldY, worldZ): # untested
-        pDepthX = self.coeffX * worldX / worldZ + self.halfResX
-        pDepthY = self.halfResY - self.coeffY * worldY / worldZ
-        pDepthZ = worldZ
-        
-        return (pDepthX, pDepthY, pDepthZ)
-
-    def rawDepthToMeters(self, depthValue):
-        if (depthValue < self.maxDepthVals):
-            return 1.0 / (depthValue * -0.0030711016 + 3.3309495161)
-        return 0.0
-
-    def setupDepthLookup(self):
-        for i in range(0, self.maxDepthVals+1):
-            self.depthLookup.append(i/100.0) #self.rawDepthToMeters(float(i)))
-
-    def getDepthLookup(self, input):
-        loc = int((float(input)/255.0) * self.maxDepthVals)
-        return self.depthLookup[loc]
+    def convertDepthToWorld(self, x, y, z):
+        normX = x / self.resolutionX - 0.5
+        normY = 0.5 - y / self.resolutionY
+    
+        z = abs(255 - z)
+        worldZ = map(z, 0, 255, self.minDepth, self.maxDepth)
+        worldX = normX * worldZ
+        worldY = normY * worldZ
+        return (worldX, -worldY, -worldZ)
         
     def setModel(self, model="Kinect"):
         if (model == "Kinect4_Narrow_Unbinned"):
@@ -93,85 +66,113 @@ class KinectConverter(object):
             self.resolutionY = 576
             self.horizontalFov = 75.0
             self.verticalFov = 65.0  
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??
         elif (model == "Kinect4_Narrow_Binned"):
             self.resolutionX = 320
             self.resolutionY = 288
             self.horizontalFov = 75.0
             self.verticalFov = 65.0 
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??
         elif (model == "Kinect4_Wide_Unbinned"):
             self.resolutionX = 1024
             self.resolutionY = 1024
             self.horizontalFov = 120.0
             self.verticalFov = 120.0 
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??
         elif (model == "Kinect4_Wide_Binned"):
             self.resolutionX = 512
             self.resolutionY = 512
             self.horizontalFov = 120.0
             self.verticalFov = 120.0 
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??
         elif (model == "Kinect2"):
             self.resolutionX = 512
             self.resolutionY = 424
             self.horizontalFov = 70.6
             self.verticalFov = 60.0  
-            self.maxDepthVals = 8191 # 13-bit
+            self.maxBitDepth = 4499 # 13-bit
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??
         elif (model == "Xtion"):
             self.resolutionX = 640
             self.resolutionY = 480
             self.horizontalFov = 58.0
             self.verticalFov = 45.0   
-            self.maxDepthVals = 2047 # ?      
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??                  
         elif (model == "Structure"):
             self.resolutionX = 640
             self.resolutionY = 480
             self.horizontalFov = 58.0
             self.verticalFov = 45.0 
-            self.maxDepthVals = 2047 # ?       
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??                   
         elif (model == "StructureCore_4:3"):
             self.resolutionX = 1280
             self.resolutionY = 960
             self.horizontalFov = 59.0
             self.verticalFov = 46.0 
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??            
         elif (model == "StructureCore_16:10"):
             self.resolutionX = 1280
             self.resolutionY = 800
             self.horizontalFov = 59.0
             self.verticalFov = 46.0 
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??            
         elif (model == "Carmine1.09"): # short range
             self.resolutionX = 640
             self.resolutionY = 480
             self.horizontalFov = 57.5
             self.verticalFov = 45.0 
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??            
         elif (model == "Carmine1.08"):
             self.resolutionX = 640
             self.resolutionY = 480
             self.horizontalFov = 57.5
             self.verticalFov = 45.0 
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??            
         elif (model == "RealSense415"):
             self.resolutionX = 1280
             self.resolutionY = 720
             self.horizontalFov = 64.0
             self.verticalFov = 41.0
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??            
         elif (model == "RealSense435"):
             self.resolutionX = 1280
             self.resolutionY = 720
             self.horizontalFov = 86.0
             self.verticalFov = 57.0        
-            self.maxDepthVals = 2047 # ?
+            self.maxBitDepth = 2047 # ?
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??            
         else:  # Kinect
             self.resolutionX = 640
             self.resolutionY = 480
             self.horizontalFov = 58.5
             self.verticalFov = 46.6
-            self.maxDepthVals = 2047 # 11-bit
+            self.maxBitDepth = 2047 # 11-bit
+            self.minDepth = 400; # ?
+            self.maxDepth = 5000; # ??
 
 
 class KcVertSphere(object):
