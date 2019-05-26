@@ -59,8 +59,18 @@ class KinectConverter(object):
         worldZ = map(z, 0, 255, self.minDepth, self.maxDepth)
         worldX = normX * worldZ
         worldY = normY * worldZ
+
+        if (resolutionX > resolutionY):
+            worldX *= (resolutionX / resolutionY)
+        elif (resolutionY > resolutionX):
+            worldY *= (resolutionY / resolutionX)
+        
         return (worldX, -worldY, -worldZ)
         
+    def depthFilter(self, img):
+        # TODO filter
+        return img
+
     def setModel(self, model="Kinect"):
         if (model == "Kinect4_Narrow_Unbinned"):
             self.resolutionX = 640
