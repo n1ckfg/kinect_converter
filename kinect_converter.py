@@ -50,22 +50,28 @@ class KinectConverter(object):
         self.xzFactor = tan(self.horizontalFov / 2) * 2
         self.yzFactor = tan(self.verticalFov / 2) * 2
 
+    def remap(self, value, min1, max1, min2, max2):
+        range1 = max1 - min1
+        range2 = max2 - min2
+        valueScaled = float(value - min1) / float(range1)
+        return min2 + (valueScaled * range2)
+
     # per pixel depth in mm
     def convertDepthToWorld(self, x, y, z):
         normX = x / self.resolutionX - 0.5
         normY = 0.5 - y / self.resolutionY
     
         z = abs(255 - z)
-        worldZ = map(z, 0, 255, self.minDepth, self.maxDepth)
+        worldZ = self.remap(z, 0, 255, self.minDepth, self.maxDepth)
         worldX = normX * worldZ
         worldY = normY * worldZ
 
-        if (resolutionX > resolutionY):
-            worldX *= (resolutionX / resolutionY)
-        elif (resolutionY > resolutionX):
-            worldY *= (resolutionY / resolutionX)
+        if (self.resolutionX > self.resolutionY):
+            worldX *= (self.resolutionX / self.resolutionY)
+        elif (self.resolutionY > self.resolutionX):
+            worldY *= (self.resolutionY / self.resolutionX)
         
-        return (worldX, -worldY, -worldZ)
+        return (worldX, worldY, worldZ)
         
     def depthFilter(self, img):
         # TODO filter
