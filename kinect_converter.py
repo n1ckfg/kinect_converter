@@ -58,10 +58,10 @@ class KinectConverter(object):
 
     # per pixel depth in mm
     def convertDepthToWorld(self, x, y, z):
-        #normX = x / self.resolutionX - 0.5
-        #normY = 0.5 - y / self.resolutionY
-        normX = x / self.resolutionX
-        normY = y / self.resolutionY
+        normX = x / self.resolutionX - 0.5
+        normY = 0.5 - y / self.resolutionY
+        #normX = x / self.resolutionX
+        #normY = y / self.resolutionY
 
         z = abs(255 - z)
         worldZ = self.remap(z, 0, 255, self.minDepth, self.maxDepth)
@@ -69,9 +69,9 @@ class KinectConverter(object):
         worldY = normY * worldZ
 
         if (self.resolutionX > self.resolutionY):
-            worldX *= (self.resolutionX / self.resolutionY)
+            worldX *= (self.horizontalFov / self.verticalFov)
         elif (self.resolutionY > self.resolutionX):
-            worldY *= (self.resolutionY / self.resolutionX)
+            worldY *= (self.verticalFov / self.horizontalFov)
         
         return (worldX, worldY, worldZ)
         
