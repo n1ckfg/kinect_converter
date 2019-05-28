@@ -69,9 +69,9 @@ class KinectConverter(object):
         worldY = normY * worldZ
 
         if (self.resolutionX > self.resolutionY):
-            worldX *= (self.horizontalFov / self.verticalFov)
+            worldX *= (self.resolutionX / self.resolutionY)
         elif (self.resolutionY > self.resolutionX):
-            worldY *= (self.verticalFov / self.horizontalFov)
+            worldY *= (self.resolutionY / self.resolutionX)
         
         return (worldX, worldY, worldZ)
         
