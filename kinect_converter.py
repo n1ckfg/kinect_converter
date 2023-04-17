@@ -1,6 +1,8 @@
 import numpy as np
 import open3d as o3d
 import cv2
+import ffmpeg
+import os
 
 def get_intrinsics(name="generic", mode="default"):
     name = name.lower()
@@ -104,6 +106,30 @@ def get_intrinsics(name="generic", mode="default"):
 
     return cx, cy, fx, fy, width, height
 
+def extract_frames(url, input_type, fps=24, rgb_dir="input_rgb", depth_dir="input_depth"):
+    input = ffmpeg.input(url)
+    video = input.video.filter("fps", fps)
+    video_rgb = None
+    video_depth = None
+
+    if (input_type == "record3d"):
+        video_rgb = ffmpeg.crop(video, 0, 0, 720, 960)
+        video_rgb = video_rgb.filter("transpose", 2) # rotate -90 deg
+        video_depth = ffmpeg.crop(video, 720, 0, 720, 960)
+        video_depth = video_depth.filter("transpose", 2) # rotate -90 deg
+    elif (input_type == "holoflix"):
+        video_rgb = ffmpeg.crop(video, 640, 120, 640, 480)
+        video_depth = ffmpeg.crop(video, 0, 120, 640, 480)
+    else:
+        video_rgb = video
+        video_depth = video
+    
+    output_rgb = ffmpeg.output(video_rgb, os.path.join(rgb_dir, "rgb_%05d.png"), start_number=0)
+    output_rgb.run(overwrite_output=True)
+
+    output_depth = ffmpeg.output(video_depth, os.path.join(depth_dir, "depth_%05d.png"), start_number=0)
+    output_depth.run(overwrite_output=True)    
+
 def do_inpainting(imDepth):
     mask = cv2.cvtColor(imDepth, cv2.COLOR_BGR2GRAY)
     ret, mask = cv2.threshold(mask, 16, 255, cv2.THRESH_BINARY_INV)
@@ -118,13 +144,19 @@ def point_cloud_from_rgbd(rgb, depth, name="generic", mode="default"):
     rgb = cv2_to_o3d(rgb)
     depth = cv2_to_o3d(depth)
     cx, cy, fx, fy, width, height = get_intrinsics(name, mode)
-
+    width = int(rgb.get_max_bound()[0])
+    height = int(rgb.get_max_bound()[1])
     #intrinsics = o3d.io.read_pinhole_camera_intrinsic("intrinsics.json")
     intrinsics = o3d.camera.PinholeCameraIntrinsic(width, height, fx=fx, fy=fy, cx=cx, cy=cy)
     rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb, depth)
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsics)
 
     return pcd
+
+def mesh_from_point_cloud(pcd):
+	pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+	mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd)
+	return mesh
 
 def xyz_from_point_cloud(pcd, u, v, width):
     loc = u + v * width
@@ -133,13 +165,17 @@ def xyz_from_point_cloud(pcd, u, v, width):
 def save_point_cloud(pcd, name="output.ply"):
     o3d.io.write_point_cloud(name, pcd)
 
+def save_mesh(mesh, name="output.ply"):
+	o3d.io.write_triangle_mesh(name, mesh)
+
 def cv2_to_o3d(img):
     return o3d.geometry.Image(np.asarray(img))
 
 # old method with no open3d dependency
-def uvd_to_xyz(u, v, d, scale=1, name="generic", mode="default"):
+def uvd_to_xyz(u, v, d, depth_scale=1, name="generic", mode="default"):
     cx, cy, fx, fy, width, height = get_intrinsics(name, mode)
 
+    '''
     d *= scale
     x_over_z = (cx - u) / fx
     y_over_z = (cy - v) / fy
@@ -147,6 +183,13 @@ def uvd_to_xyz(u, v, d, scale=1, name="generic", mode="default"):
     z = d / np.sqrt(1. + x_over_z**2 + y_over_z**2)
     x = x_over_z * z
     y = y_over_z * z
+
+    # open3d version
+    # http://www.open3d.org/docs/0.6.0/python_api/open3d.geometry.create_point_cloud_from_rgbd_image.html
+    '''
+    z = d * depth_scale
+    x = (u - cx) * z / fx
+    y = (v - cy) * z / fy
 
     #print((x, y, z))
 
