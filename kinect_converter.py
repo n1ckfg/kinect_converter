@@ -155,7 +155,7 @@ def point_cloud_from_rgbd(rgb, depth, name="generic", mode="default"):
 
 def mesh_from_point_cloud(pcd):
 	pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
-	mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd)
+	mesh, _ = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd)
 	return mesh
 
 def xyz_from_point_cloud(pcd, u, v, width):
